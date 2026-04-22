@@ -492,7 +492,13 @@ np.sqrt(max(data))
                 except:
                     self.PFM = {'pfm':data['pfm'],'t_eq':data['t_eq'],    'Rmesh':data['Rmesh'],'Zmesh':data['Zmesh']}
 
-        self.mag_dt = np.amax(np.diff(self.mag_axis['tvec']))
+        # Guard against single-time-slice input (e.g. CAKE called with one
+        # time slice): np.diff on a length-1 tvec is empty, which makes
+        # np.amax raise "zero-size array to reduction operation maximum".
+        # mag_dt is only used downstream as a window size for searchsorted,
+        # so 0.0 is a correct fallback (no extra window around tvec.min()).
+        _mag_tvec_diff = np.diff(self.mag_axis['tvec'])
+        self.mag_dt = np.amax(_mag_tvec_diff) if _mag_tvec_diff.size > 0 else 0.0
         self.mag_axis['Rmag'] = np.copy(self.surf_coeff[:,-1,0,0])
         self.mag_axis['Zmag'] = np.copy(self.surf_coeff[:,-1,0,1])
         self.surf_coeff[:,-1,0,:2] = 0
