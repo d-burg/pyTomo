@@ -260,7 +260,7 @@ class pytomo_class:
          
         tok.prepare_tokamak()
          
-        from main import tomography
+        from .main import tomography
         inputs, tokamak, progress, output = tomography(self.inputs, tok)
 
         return  tokamak, output

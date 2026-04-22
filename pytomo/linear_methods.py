@@ -2924,7 +2924,7 @@ def signal_handler(signum, frame):
 
 
 def plot_tomo_error(tvec, E, V,norm,w,D,chi2 ):
-    from fconf import usetex
+    from .fconf import usetex
     usetex()
     #from matplotlib.pyplot import *
     
