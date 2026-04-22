@@ -450,7 +450,7 @@ class Tokamak(object):
                 magx = np.mean(magx[:,:,ind],2)   #take mean field during tvec and omitted the center of field [:,0]
                 magy = np.mean(magy[:,:,ind],2)
         
-            from shared_modules import read_config
+            from .shared_modules import read_config
 
             input_parameters = read_config('tomography'+".cfg")
         

@@ -614,7 +614,7 @@ class Equlibrium:
        # plt.show()
 
         mom_order = 10
-        poly_order = 20
+        poly_order = 10
 
         args = [(jt/float(nti),jt,rho,R_cont[jt],z_cont[jt],R0[jt], Z0[jt], mom_order, poly_order) for jt in np.arange(nti)]
 

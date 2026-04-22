@@ -255,7 +255,7 @@ class pytomo_class:
 
     def run(self):
         #matplotlib.rcParams['backend'] = 'Qt5Agg'   
-        from prepare_data import loaddata
+        from .prepare_data import loaddata
         tok = loaddata(self.inputs, useCache=False, prepare_tokamak = False)
          
         tok.prepare_tokamak()
@@ -266,7 +266,7 @@ class pytomo_class:
         return  tokamak, output
     
     def fast_plot(self, output, output_path = None):
-        from make_graphs import make_graphs
+        from .make_graphs import make_graphs
         global inputs
         inputs['fast_plot'] = True
         if output_path is not None:
@@ -561,7 +561,7 @@ def main():
         sys.exit(0)
         
     elif inputs['proj']:
-        from geom_mat_setting import loadgeometry,plot_projection_space
+        from .geom_mat_setting import loadgeometry,plot_projection_space
         
         xchords, ychords, distance, nl,virt_chord  = loadgeometry(tok.geometry_path, list(tok.detectors_dict.keys()),100)   
         plot_projection_space(tok,xchords, ychords, virt_chord,nl)

@@ -25,3 +25,5 @@ def pytomo_class(*args, **kwargs):
     
 
 __all__ = [ '__version__']
+
+from . import config

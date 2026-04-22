@@ -2951,7 +2951,7 @@ def plot_tomo_error(tvec, E, V,norm,w,D,chi2 ):
     extent = tokamak.xmin,tokamak.xmax, tokamak.ymin, tokamak.ymax
     from matplotlib.ticker import MaxNLocator
 
-    from make_graphs import my_cmap_
+    from .make_graphs import my_cmap_
     f,axis = subplots(1,3, sharex=True,sharey=True)
     E[E<0] = 0
     f.set_size_inches(10,4)
@@ -3039,7 +3039,7 @@ def plot_tomo_error(tvec, E, V,norm,w,D,chi2 ):
         
 def PlotBaseVectors2(V, nx,ny):    
     #plot base vectors of the reconstruction space of the linear methods
-    #from make_graphs import my_cmap2
+    #from .make_graphs import my_cmap2
     #V = presolved_decomposi{'U':U, 'V':V , 'D':D, 'wrong_dets':wrong_dets}tion['V']
     #ion()
     from matplotlib.ticker import NullFormatter
@@ -3070,7 +3070,7 @@ def PlotBaseVectors2(V, nx,ny):
     
 def PlotBaseVectors(V, nx,ny,Nmax=np.inf):    
     #plot base vectors of the reconstruction space of the linear methods
-    #from make_graphs import my_cmap2
+    #from .make_graphs import my_cmap2
     #V = presolved_decomposi{'U':U, 'V':V , 'D':D, 'wrong_dets':wrong_dets}tion['V']
     #ion()
     N = np.size(V,0)
