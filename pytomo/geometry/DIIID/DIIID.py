@@ -682,6 +682,37 @@ np.sqrt(max(data))
 
    
         if np.any(np.isnan(magx)):
+            # Diagnostic: locate the actual source of the NaNs instead of
+            # just raising. Walks the pipeline from raw mag_axis data
+            # through the interpolation to the final magx array.
+            import sys as _sys
+            _p = lambda *a: print('[pytomo NaN debug]', *a, file=_sys.stderr, flush=True)
+            _p('magx contains NaN after surf_polyval. Tracing backwards:')
+            _p('  tvec:', np.asarray(tvec))
+            _p('  return_mean:', return_mean)
+            _p('  self.mag_dt:', self.mag_dt)
+            _p('  fast_tvec shape:', np.shape(fast_tvec),
+               ' [min,max]:', (np.min(fast_tvec), np.max(fast_tvec)) if np.size(fast_tvec) else '(empty)')
+            _p('  self.tsurf shape:', np.shape(self.tsurf),
+               ' [min,max]:', (np.min(self.tsurf), np.max(self.tsurf)) if np.size(self.tsurf) else '(empty)')
+            for _k in ('tvec', 'ahor', 'bver', 'Rmag', 'Zmag'):
+                _v = self.mag_axis.get(_k)
+                _nn = np.sum(np.isnan(_v)) if _v is not None else None
+                _p('  mag_axis[{!r}] shape={} #NaN={}'.format(_k, np.shape(_v) if _v is not None else None, _nn))
+            _p('  per-time-slice ahor/bver/R0/Z0:')
+            try:
+                _p('    ahor:', np.asarray(ahor))
+                _p('    bver:', np.asarray(bver))
+                _p('    R0  :', np.asarray(R0))
+                _p('    Z0  :', np.asarray(Z0))
+            except Exception as _e:
+                _p('    (could not print ahor/bver/R0/Z0:', _e, ')')
+            _p('  surf_coeff #NaN:', np.sum(np.isnan(surf_coeff)), 'shape:', np.shape(surf_coeff))
+            if np.any(np.isnan(surf_coeff)):
+                # which time slice?
+                _any_per_t = np.any(np.isnan(surf_coeff.reshape(np.shape(surf_coeff)[0], -1)), axis=1)
+                _p('    surf_coeff NaN per time-slice mask:', _any_per_t)
+            _p('  magx #NaN:', np.sum(np.isnan(magx)), 'shape:', np.shape(magx))
             raise Exception('nans in mag. surfaces!!')
         
         
