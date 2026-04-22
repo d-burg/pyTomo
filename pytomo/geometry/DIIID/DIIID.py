@@ -492,13 +492,20 @@ np.sqrt(max(data))
                 except:
                     self.PFM = {'pfm':data['pfm'],'t_eq':data['t_eq'],    'Rmesh':data['Rmesh'],'Zmesh':data['Zmesh']}
 
-        # Guard against single-time-slice input (e.g. CAKE called with one
-        # time slice): np.diff on a length-1 tvec is empty, which makes
-        # np.amax raise "zero-size array to reduction operation maximum".
-        # mag_dt is only used downstream as a window size for searchsorted,
-        # so 0.0 is a correct fallback (no extra window around tvec.min()).
+        # Guard against a single-entry mag_axis['tvec'] (e.g. CAKE running
+        # a single time slice where pytomo's cached equilibrium only has
+        # one fast-tvec point). np.diff on a length-<=1 array is empty,
+        # so np.amax raises "zero-size array to reduction operation
+        # maximum". mag_dt is used downstream as a half-width for
+        # searchsorted windows over fast_tvec and self.tsurf; setting it
+        # to 0 would collapse those windows to empty slices at some
+        # tvec positions, making np.median return NaN and cascading
+        # into "nans in mag. surfaces!!" inside mag_equilibrium. np.inf
+        # makes the windows cover the full arrays, which is the right
+        # semantics: with only one available equilibrium point we want
+        # to use it regardless of where the query lies.
         _mag_tvec_diff = np.diff(self.mag_axis['tvec'])
-        self.mag_dt = np.amax(_mag_tvec_diff) if _mag_tvec_diff.size > 0 else 0.0
+        self.mag_dt = np.amax(_mag_tvec_diff) if _mag_tvec_diff.size > 0 else np.inf
         self.mag_axis['Rmag'] = np.copy(self.surf_coeff[:,-1,0,0])
         self.mag_axis['Zmag'] = np.copy(self.surf_coeff[:,-1,0,1])
         self.surf_coeff[:,-1,0,:2] = 0
