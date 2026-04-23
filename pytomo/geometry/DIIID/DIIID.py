@@ -598,10 +598,22 @@ np.sqrt(max(data))
             n_smooth = sum((fast_tvec<tvec[-1]+self.mag_dt)&(fast_tvec>tvec[0]-self.mag_dt))
 
         surf_coeff = np.copy(self.surf_coeff[ind])
-            
+
         tsurf = np.copy(self.tsurf[ind])
 
-        surf_coeff = interp1d(tsurf, surf_coeff,axis=0,copy=False, bounds_error=False, fill_value=np.nan)(tvec)
+        # Guard against degenerate single-time-slice tsurf. scipy's interp1d
+        # requires at least 2 x-points, and with bounds_error=False +
+        # fill_value=np.nan it silently returns NaN for *every* query when
+        # given a 1-point x-array. That cascades: surf_coeff becomes all
+        # NaN, magx becomes all NaN, and mag_equilibrium raises
+        # "nans in mag. surfaces!!" a few lines down. When only one
+        # equilibrium snapshot is available, just broadcast it across all
+        # requested tvec instead of pretending we can interpolate.
+        if len(tsurf) < 2:
+            _shape = (len(tvec),) + surf_coeff.shape[1:]
+            surf_coeff = np.broadcast_to(surf_coeff, _shape).copy()
+        else:
+            surf_coeff = interp1d(tsurf, surf_coeff,axis=0,copy=False, bounds_error=False, fill_value=np.nan)(tvec)
 
         if return_mean:
             ind_fast = slice(fast_tvec.searchsorted(tvec[0]-self.mag_dt),
