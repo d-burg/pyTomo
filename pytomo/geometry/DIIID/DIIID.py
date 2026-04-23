@@ -593,7 +593,13 @@ np.sqrt(max(data))
 
         #calculate separatrix
         if len(tvec) > 1:
-            n_smooth = max(int(np.mean(np.diff(tvec))/np.mean(np.diff(fast_tvec))),1)
+            if len(fast_tvec) > 1:
+                n_smooth = max(int(np.mean(np.diff(tvec))/np.mean(np.diff(fast_tvec))),1)
+            else:
+                # Degenerate: fast_tvec has <=1 entry so np.diff is empty
+                # and np.mean(empty) is NaN, which would crash int(NaN).
+                # No meaningful smoothing length exists; 1 is a safe default.
+                n_smooth = 1
         else:
             n_smooth = sum((fast_tvec<tvec[-1]+self.mag_dt)&(fast_tvec>tvec[0]-self.mag_dt))
 
@@ -628,24 +634,40 @@ np.sqrt(max(data))
         else :
             fast_tvec = fast_tvec
 
-            Dt = (tvec[-1]-tvec[0])/len(tvec)+(fast_tvec[-1]-fast_tvec[0])/fast_tvec.size
-            tmin = max(tvec[0],fast_tvec[0 ])#- Dt*(n_smooth+1)
-            tmax = min(tvec[-1],fast_tvec[-1])#+Dt*(n_smooth+1)
-            imin = len(fast_tvec)-(-fast_tvec[::-1]).searchsorted(-tmin)
-            imax = fast_tvec.searchsorted(tmax)
-            imin = max(0, imin-n_smooth-1 )
-            imax = min(len(fast_tvec), imax+n_smooth+1 ) #BUG can couse problems at the begining and end
+            if len(fast_tvec) < 2:
+                # Degenerate single-equilibrium-point case: can't compute
+                # a moving average or interpolate across time. Broadcast
+                # the single available mag_axis values across all tvec.
+                # Mirrors the return_mean=True branch (which survives this
+                # case via np.median of a single-element slice combined
+                # with mag_dt=inf). Without this guard, np.interp raises
+                #   ValueError: object of too small depth for desired array
+                # because MovingAveradge of a length-<=1 array degenerates
+                # to a 0-D scalar that np.interp can't consume.
+                _n = len(np.atleast_1d(tvec))
+                ahor = np.full(_n, self.mag_axis['ahor'][0])
+                bver = np.full(_n, self.mag_axis['bver'][0])
+                R0   = np.full(_n, self.mag_axis['Rmag'][0])
+                Z0   = np.full(_n, self.mag_axis['Zmag'][0])
+            else:
+                Dt = (tvec[-1]-tvec[0])/len(tvec)+(fast_tvec[-1]-fast_tvec[0])/fast_tvec.size
+                tmin = max(tvec[0],fast_tvec[0 ])#- Dt*(n_smooth+1)
+                tmax = min(tvec[-1],fast_tvec[-1])#+Dt*(n_smooth+1)
+                imin = len(fast_tvec)-(-fast_tvec[::-1]).searchsorted(-tmin)
+                imax = fast_tvec.searchsorted(tmax)
+                imin = max(0, imin-n_smooth-1 )
+                imax = min(len(fast_tvec), imax+n_smooth+1 ) #BUG can couse problems at the begining and end
 
-            ahor = MovingAveradge(np.double(np.copy(self.mag_axis['ahor'][imin:imax])),n_smooth)
-            bver = MovingAveradge(np.double(np.copy(self.mag_axis['bver'][imin:imax])),n_smooth)
-            R0   = MovingAveradge(np.double(np.copy(self.mag_axis['Rmag'][imin:imax])),n_smooth)
-            Z0   = MovingAveradge(np.double(np.copy(self.mag_axis['Zmag'][imin:imax])),n_smooth)
-            mag_tvec = fast_tvec[imin:imax]
-            
-            ahor = np.interp(tvec,mag_tvec, ahor)
-            bver = np.interp(tvec,mag_tvec, bver)
-            R0   = np.interp(tvec,mag_tvec,   R0)
-            Z0   = np.interp(tvec,mag_tvec,   Z0)
+                ahor = MovingAveradge(np.double(np.copy(self.mag_axis['ahor'][imin:imax])),n_smooth)
+                bver = MovingAveradge(np.double(np.copy(self.mag_axis['bver'][imin:imax])),n_smooth)
+                R0   = MovingAveradge(np.double(np.copy(self.mag_axis['Rmag'][imin:imax])),n_smooth)
+                Z0   = MovingAveradge(np.double(np.copy(self.mag_axis['Zmag'][imin:imax])),n_smooth)
+                mag_tvec = fast_tvec[imin:imax]
+
+                ahor = np.interp(tvec,mag_tvec, ahor)
+                bver = np.interp(tvec,mag_tvec, bver)
+                R0   = np.interp(tvec,mag_tvec,   R0)
+                Z0   = np.interp(tvec,mag_tvec,   Z0)
                 
 
              
